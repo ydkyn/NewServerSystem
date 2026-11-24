@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: foreshy-container
-        image: yewon6211/foreshy-app:latest
+        image: dakyong/foreshy-app:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 3000
@@ -54,7 +54,7 @@ spec:
         - name: PORT
           value: "3000"
         - name: DB_HOST
-          value: "10.178.0.2"
+          value: "10.178.0.6"
         - name: DB_PORT
           value: "3306"
         - name: DB_USER

@@ -56,9 +56,39 @@ spec:
         - name: DB_USER
           value: "foreshy_user"
         - name: DB_PASSWORD
-          value: "__DB_PASSWORD__"
+          valueFrom:
+            secretKeyRef:
+              name: foreshy-secret
+              key: DB_PASSWORD
         - name: DB_NAME
           value: "foreshy_db"
+        - name: SESSION_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: foreshy-secret
+              key: SESSION_SECRET
+        - name: GROQ_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: foreshy-secret
+              key: GROQ_API_KEY
+        - name: GEMINI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: foreshy-secret
+              key: GEMINI_API_KEY
+        - name: GEMINI_API_KEY_2
+          valueFrom:
+            secretKeyRef:
+              name: foreshy-secret
+              key: GEMINI_API_KEY_2
+        - name: GEMINI_API_KEY_3
+          valueFrom:
+            secretKeyRef:
+              name: foreshy-secret
+              key: GEMINI_API_KEY_3
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "./google_ocr_key.json"
         resources:
           requests:
             cpu: "100m"
@@ -66,3 +96,15 @@ spec:
           limits:
             cpu: "500m"
             memory: "512Mi"
+        volumeMounts:
+        - name: ocr-key
+          mountPath: /usr/src/app/google_ocr_key.json
+          subPath: google_ocr_key.json
+          readOnly: true
+      volumes:
+      - name: ocr-key
+        secret:
+          secretName: foreshy-secret
+          items:
+          - key: google_ocr_key.json
+            path: google_ocr_key.json

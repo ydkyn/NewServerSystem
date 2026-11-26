@@ -53,15 +53,32 @@ stages {
         }
     }
     }
-    stage('Deploy to GKE') {
+        stage('Deploy to GKE') {
     when {
         branch 'main'
     }
     steps {
         sh "sed -i 's/foreshy-app:latest/foreshy-app:${env.BUILD_ID}/g' deployment.yaml"
-        withCredentials([string(credentialsId: 'db-password', variable: 'DB_PASSWORD')]) {
-        sh 'sed -i "s|__DB_PASSWORD__|$DB_PASSWORD|" deployment.yaml'
+        withCredentials([
+        string(credentialsId: 'db-password', variable: 'DB_PASSWORD'),
+        string(credentialsId: 'session-secret', variable: 'SESSION_SECRET'),
+        string(credentialsId: 'groq-api-key', variable: 'GROQ_API_KEY'),
+        string(credentialsId: 'gemini-api-key', variable: 'GEMINI_API_KEY'),
+        string(credentialsId: 'gemini-api-key-2', variable: 'GEMINI_API_KEY_2'),
+        string(credentialsId: 'gemini-api-key-3', variable: 'GEMINI_API_KEY_3'),
+        file(credentialsId: 'google-ocr-key', variable: 'OCR_KEY_FILE')
+        ]) {
+        sh '''
+            sed -i "s|__DB_PASSWORD__|$(printf %s "$DB_PASSWORD" | base64 -w0)|" secret.yaml
+            sed -i "s|__SESSION_SECRET__|$(printf %s "$SESSION_SECRET" | base64 -w0)|" secret.yaml
+            sed -i "s|__GROQ_API_KEY__|$(printf %s "$GROQ_API_KEY" | base64 -w0)|" secret.yaml
+            sed -i "s|__GEMINI_API_KEY__|$(printf %s "$GEMINI_API_KEY" | base64 -w0)|" secret.yaml
+            sed -i "s|__GEMINI_API_KEY_2__|$(printf %s "$GEMINI_API_KEY_2" | base64 -w0)|" secret.yaml
+            sed -i "s|__GEMINI_API_KEY_3__|$(printf %s "$GEMINI_API_KEY_3" | base64 -w0)|" secret.yaml
+            sed -i "s|__GOOGLE_OCR_KEY__|$(base64 -w0 "$OCR_KEY_FILE")|" secret.yaml
+        '''
         }
+        step([$class: 'KubernetesEngineBuilder', projectId: env.PROJECT_ID, clusterName: env.CLUSTER_NAME, location: env.LOCATION, manifestPattern: 'secret.yaml', credentialsId: env.CREDENTIALS_ID, verifyDeployments: false])
         step([$class: 'KubernetesEngineBuilder', projectId: env.PROJECT_ID, clusterName: env.CLUSTER_NAME, location: env.LOCATION, manifestPattern: 'deployment.yaml', credentialsId: env.CREDENTIALS_ID, verifyDeployments: true])
         step([$class: 'KubernetesEngineBuilder', projectId: env.PROJECT_ID, clusterName: env.CLUSTER_NAME, location: env.LOCATION, manifestPattern: 'service.yaml', credentialsId: env.CREDENTIALS_ID, verifyDeployments: false])
     }

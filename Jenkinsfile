@@ -23,9 +23,9 @@ stages {
     steps {
         script {
         withCredentials([string(credentialsId: 'db-password', variable: 'DB_PASSWORD')]) {
-            myapp.withRun('-e DB_HOST=10.178.0.6 -e DB_USER=foreshy_user -e DB_PASSWORD=$DB_PASSWORD -e DB_NAME=foreshy_db') { c ->
+            myapp.withRun('-e PORT=3000 -e DB_HOST=10.178.0.6 -e DB_USER=foreshy_user -e DB_PASSWORD=$DB_PASSWORD -e DB_NAME=foreshy_db') { c ->
             sh """
-                APP_IP=\$(docker inspect -f '{{.NetworkSettings.IPAddress}}' ${c.id})
+                APP_IP=\$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${c.id})
                 for i in \$(seq 1 30); do
                 curl -s -o /dev/null http://\$APP_IP:3000/auth/login && break
                 sleep 3
